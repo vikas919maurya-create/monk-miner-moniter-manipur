@@ -576,12 +576,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════════════
-        //  🔒 NEW GOOGLE CLOUD ENDPOINT CONFIG
-        //  Yahan localtunnel hatakar direct dynamic cloud routing set kar di hai!
-        // ═══════════════════════════════════════════════════
+        // 🔒 Yahan aapki dynamic routing aur core ports mapping set ki hai bina details badle
         var nodesConfig = [
-            { id: "01", name: "MINER 01 (GATEWAY)", url: "http://136.113.143.63:10001" },
+            { id: "01", name: "MINER 01", url: "http://136.113.143.63:10001" },
             { id: "101", name: "MINER 101", url: "http://136.113.143.63:10101" },
             { id: "199", name: "MINER 199", url: "http://136.113.143.63:10199" },
             { id: "200", name: "MINER 200", url: "http://136.113.143.63:10200" }
@@ -652,8 +649,6 @@
                 container.appendChild(card);
 
                 var startTime  = Date.now();
-                
-                // Hum image pixels/ping trick use karenge kyuki dynamic iFrames block cross-origin blocks check kar sakte hain
                 var img = new Image();
                 var timedOut = false;
                 
@@ -672,12 +667,10 @@
                 img.onerror = function() {
                     if (!timedOut) {
                         clearTimeout(timeoutId);
-                        // Agar connection active hai par image nahi mili toh bhi tunnel working hai (Miner interfaces status standard headers hide karte hain)
                         handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
                     }
                 };
 
-                // Miner endpoint link ping matrix trigger karne ke liye
                 img.src = node.url + "/favicon.ico?t=" + startTime;
             });
         }
@@ -699,7 +692,7 @@
             statusTag.className = 'status-tag dead';
             statusTag.innerText = 'FAULT';
             iframe.style.display = 'none';
-            loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Cloud mapping check karein.</div>';
+            loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
             zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
             finalizeCounters();
         }
