@@ -429,6 +429,14 @@
             position: relative;
         }
 
+        .lock-box::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: 20%;
+            width: 60%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--danger), transparent);
+        }
+
         .lock-box h2 { color: var(--danger); margin-bottom: 20px; font-size: 22px; letter-spacing: 2px; font-weight: 900; font-family: 'Orbitron', monospace; }
         .lock-box .price-line { color: var(--danger); font-size: 21px; font-weight: 900; font-family: 'Orbitron', monospace; margin-bottom: 12px; text-shadow: 0 0 12px rgba(244,63,94,0.5); line-height: 1.7; }
         .lock-box .contact-line { color: #00ff88; font-size: 19px; font-weight: bold; margin-bottom: 25px; line-height: 1.7; }
@@ -492,7 +500,7 @@
             <div class="stats-bar">
                 <div class="contact-badge">📞 CONTACT US<br>+91 7678317589</div>
                 <div class="stat-badge online">● ACTIVE<br><span id="onlineCount">0</span></div>
-                <div class="stat-badge offline">● FAULT<br><span id="offlineCount">0</span></div>
+                <div class="stat-badge offline">● FAULT<br><span id="offlineCount">10</span></div>
             </div>
         </header>
         <div class="latency-tape" id="latencyTape"></div>
@@ -551,7 +559,18 @@
     </footer>
 
     <script>
+        // ═══════════════════════════════════════════════════
+        //  EXPIRY CONFIG — sirf yeh line badlo next month ke liye
+        //  Format: "YYYY-MM-DDTHH:MM:SS"  (24-hour, local time)
+        // ═══════════════════════════════════════════════════
         var EXPIRY = "2026-06-30T23:59:00";
+
+        // ═══════════════════════════════════════════════════
+        //  LOCK ENGINE
+        //  - Har 5 sec mein date check hota hai
+        //  - Lock aur unlock DONO kaam karte hain
+        //  - Timer kabhi band nahi hota — hamesha sync karta rahe
+        // ═══════════════════════════════════════════════════
         var _dashboardLoaded = false;
 
         function _checkExpiry() {
@@ -563,12 +582,16 @@
             var lockEl  = document.getElementById('paymentLockScreen');
 
             if (locked) {
+                // === LOCK STATE ===
                 mainEl.classList.add('blur-effect');
                 lockEl.style.display = 'flex';
                 closeNode();
             } else {
+                // === UNLOCK STATE ===
                 mainEl.classList.remove('blur-effect');
                 lockEl.style.display = 'none';
+
+                // Dashboard pehli baar hi load karo
                 if (!_dashboardLoaded) {
                     _dashboardLoaded = true;
                     renderDashboard();
@@ -576,9 +599,11 @@
             }
         }
 
-        // 🔒 Yahan aapki dynamic routing aur core ports mapping set ki hai bina details badle
+        // ═══════════════════════════════════════════════════
+        //  NODES CONFIG
+        // ═══════════════════════════════════════════════════
         var nodesConfig = [
-            { id: "01", name: "MINER 01", url: "http://136.113.143.63:10001" },
+            { id: "01",  name: "MINER 01",  url: "http://136.113.143.63:10001" },
             { id: "101", name: "MINER 101", url: "http://136.113.143.63:10101" },
             { id: "199", name: "MINER 199", url: "http://136.113.143.63:10199" },
             { id: "200", name: "MINER 200", url: "http://136.113.143.63:10200" }
@@ -648,60 +673,60 @@
                 card.appendChild(body);
                 container.appendChild(card);
 
-                var startTime  = Date.now();
-                var img = new Image();
-                var timedOut = false;
-                
+                // ── Image() ping — avoids CORS/iframe block issues ──────────
+                // onload OR onerror before timeout = server responded = ONLINE
+                // 4000ms silence = no server = FAULT
+                var startTime = Date.now();
+                var responded = false;
+
+                var img       = new Image();
                 var timeoutId = setTimeout(function() {
-                    timedOut = true;
-                    handleFailure(node, card, statusTag, iframe, loadingPanel, tapeItem, zoomBtn);
+                    if (responded) return;
+                    responded = true;
+                    img.src   = '';
+
+                    // ── FAULT: no response within 4 seconds ──────────────────
+                    statusTag.className = 'status-tag dead';
+                    statusTag.innerText = 'FAULT';
+                    iframe.style.display = 'none';
+                    loadingPanel.innerHTML = '<div class="error-vector">\uD83D\uDD0C</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
+                    zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
+                    finalizeCounters();
                 }, 4000);
 
-                img.onload = function() {
-                    if (!timedOut) {
-                        clearTimeout(timeoutId);
-                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
-                    }
-                };
+                function handleSuccess() {
+                    if (responded) return;
+                    responded = true;
+                    clearTimeout(timeoutId);
+                    var latency = Date.now() - startTime;
 
-                img.onerror = function() {
-                    if (!timedOut) {
-                        clearTimeout(timeoutId);
-                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
-                    }
-                };
+                    // ── ONLINE: server replied (favicon may or may not exist) ─
+                    statusTag.className = 'status-tag live';
+                    statusTag.innerText = 'ONLINE';
+                    card.classList.add('live-glow');
+                    loadingPanel.style.display = 'none';
+                    iframe.src = node.url;
+                    onlineNodes++;
 
-                img.src = node.url + "/favicon.ico?t=" + startTime;
+                    tapeItem.innerHTML = '<span class="lat-dot" style="background:#00ff88"></span> <span style="color:#d0e8ff">' + node.name + '</span>: <span style="color:#00ff88">' + latency + 'ms</span>';
+                    zoomBtn.onclick = function() { openNode(node.url, node.name, false); };
+                    finalizeCounters();
+                }
+
+                // Both onload (favicon found) and onerror (404 but server alive)
+                // confirm the server is reachable — both treated as ONLINE
+                img.onload  = handleSuccess;
+                img.onerror = handleSuccess;
+                img.src     = node.url + '/favicon.ico?t=' + Date.now();
             });
-        }
-
-        function handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn) {
-            var latency = Date.now() - startTime;
-            statusTag.className = 'status-tag live';
-            statusTag.innerText = 'ONLINE';
-            card.classList.add('live-glow');
-            loadingPanel.style.display = 'none';
-            iframe.src = node.url;
-            onlineNodes++;
-            tapeItem.innerHTML = '<span class="lat-dot" style="background:#00ff88"></span> <span style="color:#d0e8ff">' + node.name + '</span>: <span style="color:#00ff88">' + latency + 'ms</span>';
-            zoomBtn.onclick = function() { openNode(node.url, node.name, false); };
-            finalizeCounters();
-        }
-
-        function handleFailure(node, card, statusTag, iframe, loadingPanel, tapeItem, zoomBtn) {
-            statusTag.className = 'status-tag dead';
-            statusTag.innerText = 'FAULT';
-            iframe.style.display = 'none';
-            loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
-            zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
-            finalizeCounters();
         }
 
         function finalizeCounters() {
             checkedCount++;
-            var totalCount = nodesConfig.length;
-            document.getElementById('onlineCount').innerText = onlineNodes;
-            document.getElementById('offlineCount').innerText = totalCount - onlineNodes;
+            if (checkedCount <= nodesConfig.length) {
+                document.getElementById('onlineCount').innerText = onlineNodes;
+                document.getElementById('offlineCount').innerText = nodesConfig.length - onlineNodes;
+            }
         }
 
         function openNode(url, nodeName, isOffline) {
@@ -724,9 +749,12 @@
             document.getElementById('fullscreenIframe').src = '';
         }
 
+        // ═══════════════════════════════════════════════════
+        //  PAGE LOAD — timer KABHI band nahi hoga
+        // ═══════════════════════════════════════════════════
         window.onload = function() {
-            _checkExpiry();
-            setInterval(_checkExpiry, 5000);
+            _checkExpiry();                        // turant pehla check
+            setInterval(_checkExpiry, 5000);       // phir har 5 sec — lock bhi, unlock bhi
         };
     </script>
 </body>
