@@ -500,7 +500,7 @@
             <div class="stats-bar">
                 <div class="contact-badge">📞 CONTACT US<br>+91 7678317589</div>
                 <div class="stat-badge online">● ACTIVE<br><span id="onlineCount">0</span></div>
-                <div class="stat-badge offline">● FAULT<br><span id="offlineCount">10</span></div>
+                <div class="stat-badge offline">● FAULT<br><span id="offlineCount">0</span></div>
             </div>
         </header>
         <div class="latency-tape" id="latencyTape"></div>
@@ -559,18 +559,7 @@
     </footer>
 
     <script>
-        // ═══════════════════════════════════════════════════
-        //  EXPIRY CONFIG — sirf yeh line badlo next month ke liye
-        //  Format: "YYYY-MM-DDTHH:MM:SS"  (24-hour, local time)
-        // ═══════════════════════════════════════════════════
         var EXPIRY = "2026-06-30T23:59:00";
-
-        // ═══════════════════════════════════════════════════
-        //  LOCK ENGINE
-        //  - Har 5 sec mein date check hota hai
-        //  - Lock aur unlock DONO kaam karte hain
-        //  - Timer kabhi band nahi hota — hamesha sync karta rahe
-        // ═══════════════════════════════════════════════════
         var _dashboardLoaded = false;
 
         function _checkExpiry() {
@@ -582,16 +571,12 @@
             var lockEl  = document.getElementById('paymentLockScreen');
 
             if (locked) {
-                // === LOCK STATE ===
                 mainEl.classList.add('blur-effect');
                 lockEl.style.display = 'flex';
                 closeNode();
             } else {
-                // === UNLOCK STATE ===
                 mainEl.classList.remove('blur-effect');
                 lockEl.style.display = 'none';
-
-                // Dashboard pehli baar hi load karo
                 if (!_dashboardLoaded) {
                     _dashboardLoaded = true;
                     renderDashboard();
@@ -600,13 +585,19 @@
         }
 
         // ═══════════════════════════════════════════════════
-        //  NODES CONFIG
+        // 🔥 FULLY EXPANDED MATRIX: Added 10 active routing slots
         // ═══════════════════════════════════════════════════
         var nodesConfig = [
-            { id: "01",  name: "MINER 01",  url: "http://136.113.143.63:10001" },
+            { id: "01",  name: "MINER 01 (GATEWAY)", url: "http://136.113.143.63:10001" },
             { id: "101", name: "MINER 101", url: "http://136.113.143.63:10101" },
             { id: "199", name: "MINER 199", url: "http://136.113.143.63:10199" },
-            { id: "200", name: "MINER 200", url: "http://136.113.143.63:10200" }
+            { id: "200", name: "MINER 200", url: "http://136.113.143.63:10200" },
+            { id: "02",  name: "MINER 02 SLOT", url: "http://136.113.143.63:10002" },
+            { id: "03",  name: "MINER 03 SLOT", url: "http://136.113.143.63:10003" },
+            { id: "04",  name: "MINER 04 SLOT", url: "http://136.113.143.63:10004" },
+            { id: "05",  name: "MINER 05 SLOT", url: "http://136.113.143.63:10005" },
+            { id: "06",  name: "MINER 06 SLOT", url: "http://136.113.143.63:10006" },
+            { id: "07",  name: "MINER 07 SLOT", url: "http://136.113.143.63:10007" }
         ];
 
         var onlineNodes  = 0;
@@ -673,9 +664,6 @@
                 card.appendChild(body);
                 container.appendChild(card);
 
-                // ── Image() ping — avoids CORS/iframe block issues ──────────
-                // onload OR onerror before timeout = server responded = ONLINE
-                // 4000ms silence = no server = FAULT
                 var startTime = Date.now();
                 var responded = false;
 
@@ -685,11 +673,10 @@
                     responded = true;
                     img.src   = '';
 
-                    // ── FAULT: no response within 4 seconds ──────────────────
                     statusTag.className = 'status-tag dead';
                     statusTag.innerText = 'FAULT';
                     iframe.style.display = 'none';
-                    loadingPanel.innerHTML = '<div class="error-vector">\uD83D\uDD0C</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
+                    loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
                     zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
                     finalizeCounters();
                 }, 4000);
@@ -700,11 +687,12 @@
                     clearTimeout(timeoutId);
                     var latency = Date.now() - startTime;
 
-                    // ── ONLINE: server replied (favicon may or may not exist) ─
                     statusTag.className = 'status-tag live';
                     statusTag.innerText = 'ONLINE';
                     card.classList.add('live-glow');
                     loadingPanel.style.display = 'none';
+                    
+                    // 🔄 PURANA ORIGINAL MOD: Setting iframe.src back to node url so it loads inside the page
                     iframe.src = node.url;
                     onlineNodes++;
 
@@ -713,8 +701,6 @@
                     finalizeCounters();
                 }
 
-                // Both onload (favicon found) and onerror (404 but server alive)
-                // confirm the server is reachable — both treated as ONLINE
                 img.onload  = handleSuccess;
                 img.onerror = handleSuccess;
                 img.src     = node.url + '/favicon.ico?t=' + Date.now();
@@ -749,12 +735,9 @@
             document.getElementById('fullscreenIframe').src = '';
         }
 
-        // ═══════════════════════════════════════════════════
-        //  PAGE LOAD — timer KABHI band nahi hoga
-        // ═══════════════════════════════════════════════════
         window.onload = function() {
-            _checkExpiry();                        // turant pehla check
-            setInterval(_checkExpiry, 5000);       // phir har 5 sec — lock bhi, unlock bhi
+            _checkExpiry();
+            setInterval(_checkExpiry, 5000);
         };
     </script>
 </body>
