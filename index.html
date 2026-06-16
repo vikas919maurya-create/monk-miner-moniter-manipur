@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONK MINER FARM X - NETWORK COMMAND CENTER</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --gold: #FFD700;
+            --gold-dim: rgba(255,215,0,0.15);
+            --red: #cc0000;
+            --cyan: #00e5ff;
+            --cyan-dim: rgba(0,229,255,0.1);
+            --green: #00ff88;
+            --green-dim: rgba(0,255,136,0.1);
+            --danger: #f43f5e;
+            --bg-deep: #020409;
+            --bg-card: #060d1a;
+            --bg-panel: #0a1628;
+            --border: #0f2540;
+            --border-bright: #1a3a5c;
+            --text-dim: #4a6080;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: #c8d8e8;
+            font-family: 'Share Tech Mono', monospace;
+            padding-bottom: 55px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blur-effect { filter: blur(12px); pointer-events: none; user-select: none; }
+
+        header {
+            background: linear-gradient(180deg, #050e1f 0%, #020409 100%);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-bright);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.8), 0 1px 0 rgba(0,229,255,0.08);
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0;
+            width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), var(--gold), var(--red), transparent);
+            opacity: 0.6;
+        }
+
+        .logo-section { display: flex; flex-direction: column; gap: 4px; }
+
+        .logo-section h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 26px;
+            color: var(--gold);
+            letter-spacing: 3px;
+            font-weight: 900;
+            text-shadow: 0 0 12px rgba(255,215,0,0.5), 0 0 30px rgba(255,180,0,0.2);
+        }
+
+        .logo-section h1 .x-manipur {
+            color: var(--red);
+            text-shadow: 0 0 12px rgba(200,0,0,0.7), 0 0 25px rgba(150,0,0,0.4);
+            font-size: 26px;
+            display: inline;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-tagline::before {
+            content: '';
+            width: 20px; height: 1px;
+            background: var(--cyan);
+            opacity: 0.5;
+        }
+
+        .stats-bar { display: flex; gap: 10px; align-items: stretch; }
+
+        .stat-badge, .contact-badge {
+            width: 140px;
+            height: 58px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-badge::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer { to { left: 200%; } }
+
+        .online {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(0,255,136,0.3);
+            box-shadow: 0 0 10px rgba(0,255,136,0.1), inset 0 0 10px rgba(0,255,136,0.05);
+        }
+
+        .offline {
+            background: rgba(244,63,94,0.08);
+            color: var(--danger);
+            border: 1px solid rgba(244,63,94,0.3);
+            box-shadow: 0 0 10px rgba(244,63,94,0.1), inset 0 0 10px rgba(244,63,94,0.05);
+        }
+
+        .contact-badge {
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: 1px solid rgba(255,215,0,0.3);
+            box-shadow: 0 0 10px rgba(255,215,0,0.1);
+        }
+
+        .stat-badge span {
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1.2;
+        }
+
+        .latency-tape {
+            background: #030810;
+            padding: 7px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-size: 13px;
+            color: var(--text-dim);
+            position: relative;
+            z-index: 1;
+        }
+
+        .latency-tape::-webkit-scrollbar { display: none; }
+
+        .latency-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,229,255,0.03);
+            padding: 3px 10px;
+            border-radius: 2px;
+            border: 1px solid var(--border);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .lat-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            padding: 22px;
+            max-width: 1800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .node-card {
+            background: var(--bg-card);
+            border-radius: 6px;
+            border: 1px solid var(--border-bright);
+            overflow: hidden;
+            height: 390px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .node-card::before, .node-card::after {
+            content: '';
+            position: absolute;
+            width: 12px; height: 12px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .node-card::before {
+            top: -1px; left: -1px;
+            border-top: 2px solid var(--cyan);
+            border-left: 2px solid var(--cyan);
+        }
+
+        .node-card::after {
+            bottom: -1px; right: -1px;
+            border-bottom: 2px solid var(--cyan);
+            border-right: 2px solid var(--cyan);
+        }
+
+        .node-card.live-glow {
+            border-color: rgba(0,255,136,0.3);
+            box-shadow: 0 0 20px rgba(0,255,136,0.08), 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .node-card.live-glow::before, .node-card.live-glow::after { border-color: var(--green); }
+
+        .node-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0,229,255,0.4);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 20px rgba(0,229,255,0.08);
+        }
+
+        .node-header {
+            background: linear-gradient(90deg, #040c1a, #060d1a);
+            padding: 13px 16px;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .node-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 1px;
+            background: linear-gradient(90deg, var(--cyan), transparent);
+            opacity: 0.2;
+        }
+
+        .node-title {
+            color: #d0e8ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+        }
+
+        .node-title .miner-icon { color: var(--gold); font-size: 12px; }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        .status-tag {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .status-tag.live {
+            background: var(--green-dim);
+            color: var(--green);
+            border-color: rgba(0,255,136,0.3);
+            box-shadow: 0 0 6px rgba(0,255,136,0.2);
+        }
+
+        .status-tag.dead {
+            background: rgba(244,63,94,0.08);
+            color: var(--danger);
+            border-color: rgba(244,63,94,0.3);
+        }
+
+        .action-btn {
+            background: rgba(0,229,255,0.06);
+            color: var(--cyan);
+            border: 1px solid rgba(0,229,255,0.2);
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+        }
+
+        .action-btn:hover {
+            background: rgba(0,229,255,0.15);
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0,229,255,0.3);
+        }
+
+        .node-body {
+            flex-grow: 1;
+            position: relative;
+            background: var(--bg-deep);
+            height: calc(100% - 44px);
+        }
+
+        iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        .custom-overlay-panel {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(ellipse at center, #050e1e 0%, #020409 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+            text-align: center;
+            z-index: 40;
+        }
+
+        .loader-hex { width: 50px; height: 50px; position: relative; margin-bottom: 18px; }
+
+        .loader-hex::before, .loader-hex::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        .loader-hex::before {
+            width: 44px; height: 44px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--cyan);
+            border-right: 2px solid var(--cyan);
+            animation: spin 1.2s linear infinite;
+        }
+
+        .loader-hex::after {
+            width: 28px; height: 28px;
+            border: 2px solid transparent;
+            border-bottom: 2px solid var(--gold);
+            border-left: 2px solid var(--gold);
+            animation: spin 0.8s linear infinite reverse;
+        }
+
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        .panel-status-text { font-size: 13px; text-transform: uppercase; letter-spacing: 3px; color: var(--text-dim); font-weight: bold; }
+        .error-vector { font-size: 40px; margin-bottom: 12px; filter: drop-shadow(0 0 8px rgba(244,63,94,0.5)); }
+        .panel-error-title { font-size: 15px; font-weight: bold; color: #e2e8f0; margin-bottom: 8px; letter-spacing: 2px; font-family: 'Orbitron', monospace; }
+        .panel-error-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; max-width: 220px; }
+
+        .fullscreen-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-deep);
+            z-index: 10000;
+            flex-direction: column;
+        }
+
+        .fullscreen-header {
+            background: linear-gradient(90deg, #040c1a, #020409);
+            padding: 16px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-bright);
+        }
+
+        .fullscreen-body { flex-grow: 1; background: var(--bg-deep); position: relative; }
+
+        .lock-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(2,4,9,0.97);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lock-box {
+            background: linear-gradient(135deg, #0d0f2a 0%, #060d1a 100%);
+            padding: 50px 40px;
+            border-radius: 8px;
+            border: 1px solid rgba(244,63,94,0.4);
+            text-align: center;
+            max-width: 480px;
+            box-shadow: 0 0 50px rgba(244,63,94,0.15), 0 0 100px rgba(244,63,94,0.05);
+            position: relative;
+        }
+
+        .lock-box h2 { color: var(--danger); margin-bottom: 20px; font-size: 22px; letter-spacing: 2px; font-weight: 900; font-family: 'Orbitron', monospace; }
+        .lock-box .price-line { color: var(--danger); font-size: 21px; font-weight: 900; font-family: 'Orbitron', monospace; margin-bottom: 12px; text-shadow: 0 0 12px rgba(244,63,94,0.5); line-height: 1.7; }
+        .lock-box .contact-line { color: #00ff88; font-size: 19px; font-weight: bold; margin-bottom: 25px; line-height: 1.7; }
+        .lock-box .thank-line { color: #64748b; font-size: 15px; letter-spacing: 2px; margin-top: 6px; }
+
+        .whatsapp-btn {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: #fff;
+            padding: 14px 28px;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(22,163,74,0.3);
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .whatsapp-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(22,163,74,0.4); }
+
+        footer {
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #020409, #040c1a, #020409);
+            border-top: 1px solid var(--border-bright);
+            padding: 10px 0;
+            overflow: hidden;
+            z-index: 90;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.6);
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), var(--gold), var(--cyan), transparent);
+            opacity: 0.3;
+        }
+
+        .marquee { display: flex; white-space: nowrap; animation: marquee 35s linear infinite; }
+        .ticker-item { margin-right: 50px; font-size: 14px; letter-spacing: 1.5px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
+        .ticker-sep { color: var(--border-bright); margin-right: 50px; font-size: 14px; }
+        .up { color: var(--green); }
+        .down { color: var(--danger); }
+        @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body>
+
+    <div id="mainContent">
+        <header>
+            <div class="logo-section">
+                <h1>MONK MINER FARM <span class="x-manipur">X MANIPUR</span></h1>
+                <div class="logo-tagline">NETWORK OPERATIONS SYSTEM &nbsp;•&nbsp; CORE COMMAND CONTROL</div>
+            </div>
+            <div class="stats-bar">
+                <div class="contact-badge">📞 CONTACT US<br>+91 7678317589</div>
+                <div class="stat-badge online">● ACTIVE<br><span id="onlineCount">0</span></div>
+                <div class="stat-badge offline">● FAULT<br><span id="offlineCount">0</span></div>
+            </div>
+        </header>
+        <div class="latency-tape" id="latencyTape"></div>
+        <div class="grid-container" id="gridContainer"></div>
+    </div>
+
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="fullscreen-header">
+            <h2 id="modalNodeTitle" style="color:var(--cyan);font-size:14px;letter-spacing:2px;font-family:'Orbitron',monospace;">REMOTE CORE CONSOLE INTERFACE</h2>
+            <button class="action-btn" onclick="closeNode()" style="padding:8px 20px;font-size:12px;">✖ DISCONNECT</button>
+        </div>
+        <div class="fullscreen-body">
+            <iframe id="fullscreenIframe" src=""></iframe>
+            <div class="custom-overlay-panel" id="modalErrorScreen" style="display:none;z-index:999999;">
+                <div class="error-vector">❌</div>
+                <div class="panel-error-title">SESSION TERMINATED</div>
+                <div class="panel-error-desc">Remote hash board engine un-reachable state me chala gaya hai. Network route debug karein.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lock-overlay" id="paymentLockScreen">
+        <div class="lock-box">
+            <h2>🔒 SUBSCRIPTION EXPIRED</h2>
+            <div class="price-line">💰 Please Pay ₹99 / Month</div>
+            <div class="contact-line">
+                📲 For Payment Contact Owner<br>
+                WhatsApp: <strong>+91 7678317589</strong>
+            </div>
+            <a href="https://wa.me/917678317589?text=Hello%2C%20I%20want%20to%20renew%20my%20Monk%20Miner%20Farm%20subscription" target="_blank" class="whatsapp-btn">
+                💬 PAY NOW ON WHATSAPP
+            </a>
+            <div class="thank-line">— THANK YOU —<br>THE MONK MINER REPAIR CENTER</div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="marquee">
+            <span class="ticker-item">◈ BTC/INR: <span class="up">₹56,23,450 ▲2.4%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ ETH/INR: <span class="up">₹2,94,820 ▲1.8%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ LTC/INR: <span class="down">₹7,010 ▼0.5%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ DOGE/INR: <span class="up">₹12.48 ▲5.2%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ XRP/INR: <span class="up">₹198.30 ▲3.1%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ BNB/INR: <span class="up">₹49,250 ▲1.2%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ SOL/INR: <span class="up">₹13,740 ▲4.5%</span></span>
+            <span class="ticker-sep">|</span>
+            <span class="ticker-item">◈ HASH STREAM: <span class="up">■■■■■ OPTIMAL</span></span>
+            <span class="ticker-sep">|</span>
+        </div>
+    </footer>
+
+    <script>
+        var EXPIRY = "2026-06-30T23:59:00";
+        var _dashboardLoaded = false;
+
+        function _checkExpiry() {
+            var now    = new Date();
+            var expiry = new Date(EXPIRY);
+            var locked = (now >= expiry);
+
+            var mainEl  = document.getElementById('mainContent');
+            var lockEl  = document.getElementById('paymentLockScreen');
+
+            if (locked) {
+                mainEl.classList.add('blur-effect');
+                lockEl.style.display = 'flex';
+                closeNode();
+            } else {
+                mainEl.classList.remove('blur-effect');
+                lockEl.style.display = 'none';
+                if (!_dashboardLoaded) {
+                    _dashboardLoaded = true;
+                    renderDashboard();
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════
+        //  🔒 NEW GOOGLE CLOUD ENDPOINT CONFIG
+        //  Yahan localtunnel hatakar direct dynamic cloud routing set kar di hai!
+        // ═══════════════════════════════════════════════════
+        var nodesConfig = [
+            { id: "01", name: "MINER 01 (GATEWAY)", url: "http://136.113.143.63:10001" },
+            { id: "101", name: "MINER 101", url: "http://136.113.143.63:10101" },
+            { id: "199", name: "MINER 199", url: "http://136.113.143.63:10199" },
+            { id: "200", name: "MINER 200", url: "http://136.113.143.63:10200" }
+        ];
+
+        var onlineNodes  = 0;
+        var checkedCount = 0;
+
+        function renderDashboard() {
+            var container = document.getElementById('gridContainer');
+            var tape      = document.getElementById('latencyTape');
+            container.innerHTML = '';
+            tape.innerHTML = '';
+            onlineNodes  = 0;
+            checkedCount = 0;
+
+            nodesConfig.forEach(function(node) {
+                var tapeItem = document.createElement('div');
+                tapeItem.className = 'latency-item';
+                tapeItem.id = 'tape-' + node.id;
+                tapeItem.innerHTML = '<span class="lat-dot" style="background:#f43f5e"></span> ' + node.name + ': <span style="color:#f43f5e">OFFLINE</span>';
+                tape.appendChild(tapeItem);
+
+                var card = document.createElement('div');
+                card.className = 'node-card';
+                card.id = 'card-' + node.id;
+
+                var header = document.createElement('div');
+                header.className = 'node-header';
+
+                var titleSpan = document.createElement('div');
+                titleSpan.className = 'node-title';
+                titleSpan.innerHTML = '<span class="miner-icon">⬡</span> ' + node.name;
+
+                var actionsDiv = document.createElement('div');
+                actionsDiv.className = 'header-actions';
+
+                var statusTag = document.createElement('span');
+                statusTag.id = 'status-' + node.id;
+                statusTag.className = 'status-tag dead';
+                statusTag.innerText = 'OFFLINE';
+
+                var zoomBtn = document.createElement('button');
+                zoomBtn.className = 'action-btn';
+                zoomBtn.innerText = 'EXPAND ⛶';
+
+                actionsDiv.appendChild(statusTag);
+                actionsDiv.appendChild(zoomBtn);
+                header.appendChild(titleSpan);
+                header.appendChild(actionsDiv);
+
+                var body = document.createElement('div');
+                body.className = 'node-body';
+
+                var iframe = document.createElement('iframe');
+                iframe.id = 'iframe-' + node.id;
+                iframe.loading = 'lazy';
+
+                var loadingPanel = document.createElement('div');
+                loadingPanel.className = 'custom-overlay-panel';
+                loadingPanel.id = 'overlay-' + node.id;
+                loadingPanel.innerHTML = '<div class="loader-hex"></div><div class="panel-status-text">INITIALIZING HASH ENGINE...</div>';
+
+                body.appendChild(iframe);
+                body.appendChild(loadingPanel);
+                card.appendChild(header);
+                card.appendChild(body);
+                container.appendChild(card);
+
+                var startTime  = Date.now();
+                
+                // Hum image pixels/ping trick use karenge kyuki dynamic iFrames block cross-origin blocks check kar sakte hain
+                var img = new Image();
+                var timedOut = false;
+                
+                var timeoutId = setTimeout(function() {
+                    timedOut = true;
+                    handleFailure(node, card, statusTag, iframe, loadingPanel, tapeItem, zoomBtn);
+                }, 4000);
+
+                img.onload = function() {
+                    if (!timedOut) {
+                        clearTimeout(timeoutId);
+                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
+                    }
+                };
+
+                img.onerror = function() {
+                    if (!timedOut) {
+                        clearTimeout(timeoutId);
+                        // Agar connection active hai par image nahi mili toh bhi tunnel working hai (Miner interfaces status standard headers hide karte hain)
+                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
+                    }
+                };
+
+                // Miner endpoint link ping matrix trigger karne ke liye
+                img.src = node.url + "/favicon.ico?t=" + startTime;
+            });
+        }
+
+        function handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn) {
+            var latency = Date.now() - startTime;
+            statusTag.className = 'status-tag live';
+            statusTag.innerText = 'ONLINE';
+            card.classList.add('live-glow');
+            loadingPanel.style.display = 'none';
+            iframe.src = node.url;
+            onlineNodes++;
+            tapeItem.innerHTML = '<span class="lat-dot" style="background:#00ff88"></span> <span style="color:#d0e8ff">' + node.name + '</span>: <span style="color:#00ff88">' + latency + 'ms</span>';
+            zoomBtn.onclick = function() { openNode(node.url, node.name, false); };
+            finalizeCounters();
+        }
+
+        function handleFailure(node, card, statusTag, iframe, loadingPanel, tapeItem, zoomBtn) {
+            statusTag.className = 'status-tag dead';
+            statusTag.innerText = 'FAULT';
+            iframe.style.display = 'none';
+            loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Cloud mapping check karein.</div>';
+            zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
+            finalizeCounters();
+        }
+
+        function finalizeCounters() {
+            checkedCount++;
+            var totalCount = nodesConfig.length;
+            document.getElementById('onlineCount').innerText = onlineNodes;
+            document.getElementById('offlineCount').innerText = totalCount - onlineNodes;
+        }
+
+        function openNode(url, nodeName, isOffline) {
+            document.getElementById('modalNodeTitle').innerText = "REMOTE INTERFACE // " + nodeName;
+            var modalIframe = document.getElementById('fullscreenIframe');
+            var modalError  = document.getElementById('modalErrorScreen');
+            if (isOffline) {
+                modalIframe.style.display = 'none';
+                modalError.style.display  = 'flex';
+            } else {
+                modalError.style.display  = 'none';
+                modalIframe.style.display = 'block';
+                modalIframe.src = url;
+            }
+            document.getElementById('fullscreenOverlay').style.display = 'flex';
+        }
+
+        function closeNode() {
+            document.getElementById('fullscreenOverlay').style.display = 'none';
+            document.getElementById('fullscreenIframe').src = '';
+        }
+
+        window.onload = function() {
+            _checkExpiry();
+            setInterval(_checkExpiry, 5000);
+        };
+    </script>
+</body>
+</html>
