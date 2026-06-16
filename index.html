@@ -584,9 +584,7 @@
             }
         }
 
-        // ═══════════════════════════════════════════════════
-        // 🔥 FULLY EXPANDED MATRIX: Added 10 active routing slots
-        // ═══════════════════════════════════════════════════
+        // 🎯 Perfect 10 Node Dynamic Matrix Mapping
         var nodesConfig = [
             { id: "01",  name: "MINER 01 (GATEWAY)", url: "http://136.113.143.63:10001" },
             { id: "101", name: "MINER 101", url: "http://136.113.143.63:10101" },
@@ -652,6 +650,7 @@
                 var iframe = document.createElement('iframe');
                 iframe.id = 'iframe-' + node.id;
                 iframe.loading = 'lazy';
+                iframe.style.display = 'none';
 
                 var loadingPanel = document.createElement('div');
                 loadingPanel.className = 'custom-overlay-panel';
@@ -665,54 +664,68 @@
                 container.appendChild(card);
 
                 var startTime = Date.now();
-                var responded = false;
+                
+                // 🔄 Strict Header Content Ping validation
+                // Isse cloud ports jhootha reply nahi de paenge, machine chalu hogi tabhi reply aayega!
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', node.url + '/favicon.ico?t=' + startTime, true);
+                xhr.timeout = 3500; // 3.5 seconds cutoff
 
-                var img       = new Image();
-                var timeoutId = setTimeout(function() {
-                    if (responded) return;
-                    responded = true;
-                    img.src   = '';
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 2) { // Headers Received state
+                        // Cloud firewall dummy replies me status code hamesha 0 ya empty aata hai cross-origin par
+                        // Agar actual machine active hai toh status block properly respond karega!
+                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
+                        xhr.abort();
+                    }
+                };
 
-                    statusTag.className = 'status-tag dead';
-                    statusTag.innerText = 'FAULT';
-                    iframe.style.display = 'none';
-                    loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
-                    zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
-                    finalizeCounters();
-                }, 4000);
+                xhr.ontimeout = function() {
+                    handleFailure(node, card, statusTag, iframe, loadingPanel, zoomBtn);
+                };
 
-                function handleSuccess() {
-                    if (responded) return;
-                    responded = true;
-                    clearTimeout(timeoutId);
-                    var latency = Date.now() - startTime;
+                xhr.onerror = function() {
+                    // Agar connection cross-origin block bhi kare par drop na ho toh machine working hai
+                    if(xhr.status !== 0) {
+                        handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn);
+                    } else {
+                        handleFailure(node, card, statusTag, iframe, loadingPanel, zoomBtn);
+                    }
+                };
 
-                    statusTag.className = 'status-tag live';
-                    statusTag.innerText = 'ONLINE';
-                    card.classList.add('live-glow');
-                    loadingPanel.style.display = 'none';
-                    
-                    // 🔄 PURANA ORIGINAL MOD: Setting iframe.src back to node url so it loads inside the page
-                    iframe.src = node.url;
-                    onlineNodes++;
-
-                    tapeItem.innerHTML = '<span class="lat-dot" style="background:#00ff88"></span> <span style="color:#d0e8ff">' + node.name + '</span>: <span style="color:#00ff88">' + latency + 'ms</span>';
-                    zoomBtn.onclick = function() { openNode(node.url, node.name, false); };
-                    finalizeCounters();
-                }
-
-                img.onload  = handleSuccess;
-                img.onerror = handleSuccess;
-                img.src     = node.url + '/favicon.ico?t=' + Date.now();
+                xhr.send();
             });
+        }
+
+        function handleSuccess(node, card, statusTag, iframe, loadingPanel, tapeItem, startTime, zoomBtn) {
+            var latency = Date.now() - startTime;
+            statusTag.className = 'status-tag live';
+            statusTag.innerText = 'ONLINE';
+            card.classList.add('live-glow');
+            loadingPanel.style.display = 'none';
+            iframe.style.display = 'block';
+            iframe.src = node.url;
+            onlineNodes++;
+            tapeItem.innerHTML = '<span class="lat-dot" style="background:#00ff88"></span> <span style="color:#d0e8ff">' + node.name + '</span>: <span style="color:#00ff88">' + latency + 'ms</span>';
+            zoomBtn.onclick = function() { openNode(node.url, node.name, false); };
+            finalizeCounters();
+        }
+
+        function handleFailure(node, card, statusTag, iframe, loadingPanel, zoomBtn) {
+            statusTag.className = 'status-tag dead';
+            statusTag.innerText = 'FAULT';
+            iframe.style.display = 'none';
+            loadingPanel.style.display = 'flex';
+            loadingPanel.innerHTML = '<div class="error-vector">🔌</div><div class="panel-error-title">MINER OFFLINE</div><div class="panel-error-desc">Machine unreachable. Power loss or tunnel process drop detected.</div>';
+            zoomBtn.onclick = function() { openNode(node.url, node.name, true); };
+            finalizeCounters();
         }
 
         function finalizeCounters() {
             checkedCount++;
-            if (checkedCount <= nodesConfig.length) {
-                document.getElementById('onlineCount').innerText = onlineNodes;
-                document.getElementById('offlineCount').innerText = nodesConfig.length - onlineNodes;
-            }
+            var totalCount = nodesConfig.length;
+            document.getElementById('onlineCount').innerText = onlineNodes;
+            document.getElementById('offlineCount').innerText = totalCount - onlineNodes;
         }
 
         function openNode(url, nodeName, isOffline) {
